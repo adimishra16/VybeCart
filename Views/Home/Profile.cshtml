@@ -1,0 +1,380 @@
+﻿@model Ecommerce.Models.ViewModels.UserViewModel
+
+@{
+    ViewBag.Title = "Profile";
+}
+
+<!-- Bootstrap & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    body {
+        background: #f4f4f4; /* Simple light background */
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .container {
+        max-width: 800px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+        color: #333;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-name {
+        font-size: 26px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .profile-icon {
+        font-size: 50px;
+        color: #007bff;
+    }
+
+    .btn-primary, .btn-success {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .btn-primary:hover, .btn-success:hover {
+        transform: scale(1.05);
+    }
+
+    .list-group-item {
+        border-radius: 8px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        background: #007bff;
+        color: white;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .setDefaultBtn {
+        background: #ffcc00;
+        border: none;
+        color: black;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 5px 10px;
+    }
+
+    .deleteAddressBtn {
+        background: #ff4d4d;
+        border: none;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 5px 10px;
+    }
+
+    .deleteAddressBtn:hover, .setDefaultBtn:hover {
+        opacity: 0.8;
+    }
+</style>
+
+<div class="container mt-5">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <i class="fas fa-user-circle profile-icon"></i>
+        <h2 class="profile-name">@Model.FirstName @Model.LastName</h2>
+    </div>
+
+    <!-- User Details -->
+    <div class="card">
+        <h4 class="mb-3"><i class="fas fa-user-edit"></i> Personal Information</h4>
+        <form id="updateProfileForm">
+            <div class="mb-3">
+                <label class="form-label">First Name</label>
+                <input type="text" class="form-control" id="FirstName" value="@Model.FirstName" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="LastName" value="@Model.LastName" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" id="Username" value="@Model.Username" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="Email" value="@Model.Email" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-control" id="Phone" value="@Model.Phone" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+        </form>
+        <!-- Change Password Button -->
+        <button class="btn btn-warning mt-3" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            <i class="fas fa-key"></i> Change Password
+        </button>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Old Password</label>
+                            <input type="password" class="form-control" id="OldPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="NewPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="ConfirmNewPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Section -->
+    <div class="card mt-4">
+        <h4><i class="fas fa-map-marker-alt"></i> My Addresses</h4>
+        <button class="btn btn-success mb-2 px-3 py-1" style="width: 200px; margin-left:500px;" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            <i class="fas fa-plus"></i> Add New Address
+        </button>
+        <ul class="list-group" id="addressList">
+            @foreach (var address in Model.Addresses)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@address.HouseNo, @address.SocietyName</strong><br>
+                        <span>@address.Landmark</span><br>
+                        <span>@address.City - @address.PinCode</span>
+                    </div>
+
+                    <div>
+                        <button class="btn btn-sm setDefaultBtn" data-id="@address.Id" @(address.IsDefault ? "disabled" : "")>
+                            @(address.IsDefault ? "Default" : "Set as Default")
+                        </button>
+
+                        @if (!address.IsDefault)
+                        {
+                            <button class="btn btn-sm deleteAddressBtn" data-id="@address.Id">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAddressLabel">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAddressForm">
+                    <div class="mb-3">
+                        <label class="form-label">House No</label>
+                        <input type="text" class="form-control" id="HouseNo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Society Name</label>
+                        <input type="text" class="form-control" id="SocietyName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Landmark</label>
+                        <input type="text" class="form-control" id="Landmark">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pin Code</label>
+                        <input type="text" class="form-control" id="PinCode" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" id="City" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Save Address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+
+        // Update Profile
+        $("#updateProfileForm").submit(function (e) {
+            e.preventDefault();
+
+            var userData = {
+                FirstName: $("#FirstName").val(),
+                LastName: $("#LastName").val(),
+                Username: $("#Username").val(),
+                Email: $("#Email").val(),
+                Phone: $("#Phone").val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("UpdateProfile", "Home")',
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(userData),
+                success: function (response) {
+                    alert(response.message);
+                },
+                error: function () {
+                    alert("Error updating profile.");
+                }
+            });
+        });
+         // Change Password
+    $("#changePasswordForm").submit(function (e) {
+        e.preventDefault();
+
+        var oldPassword = $("#OldPassword").val();
+        var newPassword = $("#NewPassword").val();
+        var confirmNewPassword = $("#ConfirmNewPassword").val();
+
+        if (newPassword !== confirmNewPassword) {
+            alert("New Password and Confirm Password do not match!");
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("ChangePassword", "Home")',
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                OldPassword: oldPassword,
+                NewPassword: newPassword
+            }),
+            success: function (response) {
+                alert(response.message);
+                if (response.success) {
+                    //$("#changePasswordModal").modal('toggle');
+                    location.reload();
+                    $("#changePasswordForm")[0].reset();
+                }
+            },
+            error: function () {
+                alert("Error changing password.");
+            }
+        });
+    });
+        // Save Address
+        $("#addAddressForm").submit(function (e) {
+            e.preventDefault();
+
+            var addressData = {
+                HouseNo: $("#HouseNo").val(),
+                SocietyName: $("#SocietyName").val(),
+                Landmark: $("#Landmark").val(),
+                PinCode: $("#PinCode").val(),
+                City: $("#City").val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("SaveAddress", "Home")',
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(addressData),
+                success: function (response) {
+                    if (response.success) {
+                        alert("Address added successfully!");
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert("Error adding address.");
+                }
+            });
+        });
+
+        // Set Address as Default
+        $(".setDefaultBtn").click(function () {
+            var addressId = $(this).data("id");
+
+            $.ajax({
+                url: '@Url.Action("SetDefaultAddress", "Home")',
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ addressId: addressId }),
+                success: function (response) {
+                    if (response.success) {
+                        alert("Default address updated!");
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert("Error setting default address.");
+                }
+            });
+        });
+
+        // Delete Address
+        $(".deleteAddressBtn").click(function () {
+            var addressId = $(this).data("id");
+
+            if (confirm("Are you sure you want to delete this address?")) {
+                $.ajax({
+                    url: '@Url.Action("DeleteAddress", "Home")',
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ addressId: addressId }),
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Address deleted successfully!");
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Error deleting address.");
+                    }
+                });
+            }
+        });
+
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

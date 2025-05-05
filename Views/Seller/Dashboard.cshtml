@@ -1,0 +1,200 @@
+﻿@{
+    ViewBag.Title = "Dashboard";
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<h2 class="mb-4">Welcome, @ViewBag.FirstName @ViewBag.LastName</h2>
+
+<!-- Buttons for navigating -->
+<!-- Buttons for navigating -->
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="@Url.Action("Inventory", "Seller")" class="btn btn-info btn-lg">
+        <i class="fas fa-boxes"></i> Go to Inventory
+    </a>
+    <a href="@Url.Action("AddProduct", "Seller")" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Add Product
+    </a>
+    <a href="@Url.Action("ManageOrder", "Seller")" class="btn btn-warning btn-lg">
+        <i class="fas fa-shopping-cart"></i> Manage Orders
+    </a>
+</div>
+
+
+<!-- Product List -->
+<div class="row">
+    @foreach (var product in ViewBag.Products)
+    {
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="card shadow-lg rounded-3 border-0">
+                <img src="@Url.Content(product.ProductImagePath)" alt="@product.ProductTitle" class="card-img-top rounded-top" style="height: 250px; object-fit: cover;">
+
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <input type="text" value="@product.ProductTitle" id="productTitle-@product.ProductId" class="form-control" readonly />
+                    </h5>
+                    <p class="card-text text-muted">
+                        <textarea id="productDescription-@product.ProductId" class="form-control" readonly>@product.Description</textarea>
+                    </p>
+                    <p class="card-text">
+                        <strong>Price:</strong>
+                        <input type="number" id="productPrice-@product.ProductId" value="@product.Price" class="form-control" readonly />
+                    </p>
+
+                    <!-- Stock indicator -->
+                    <p class="card-text">
+                        <strong>Stock:</strong>
+                        <span class="fw-bold @(product.Stock > 5 ? "text-success" : "text-danger")">
+                            @product.Stock
+                        </span>
+                    </p>
+
+                    <!-- Active/Inactive Toggle -->
+                    <p class="card-text">
+                        <strong>Status:</strong>
+                        <select id="productStatus-@product.ProductId" class="form-control" disabled>
+                            <option value="1" @(product.IsActive ? "selected" : "")>Inactive</option>
+                            <option value="0" @(product.IsActive ? "" : "selected")>Active</option>
+                        </select>
+                    </p>
+
+                    <!-- Buttons for editing -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-warning btn-sm btn-edit" data-productid="@product.ProductId">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-success btn-sm btn-save" data-productid="@product.ProductId" style="display:none;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button class="btn btn-secondary btn-sm btn-cancel" data-productid="@product.ProductId" style="display:none;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button class="btn btn-danger btn-sm btn-delete" data-productid="@product.ProductId">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- FontAwesome Icons -->
+<script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Edit button handler
+        $(".btn-edit").click(function () {
+            var productId = $(this).data("productid");
+            $("#productTitle-" + productId + ", #productDescription-" + productId + ", #productPrice-" + productId + ", #productStatus-" + productId).prop("readonly", false).prop("disabled", false);
+            $(this).hide();
+            $(".btn-save[data-productid='" + productId + "'], .btn-cancel[data-productid='" + productId + "']").show();
+        });
+
+        // Cancel button handler
+        $(".btn-cancel").click(function () {
+            var productId = $(this).data("productid");
+            location.reload(); // Reload the page to reset the fields
+        });
+
+        // Save button handler
+        $(".btn-save").click(function () {
+            var productId = $(this).data("productid");
+
+            var updatedProduct = {
+                ProductId: productId,
+                ProductTitle: $("#productTitle-" + productId).val(),
+                Description: $("#productDescription-" + productId).val(),
+                Price: $("#productPrice-" + productId).val(),
+                IsActive: $("#productStatus-" + productId).val() === "1"
+            };
+
+            $.ajax({
+                url: '/Seller/SaveProduct',
+                type: 'POST',
+                data: updatedProduct,
+                success: function (response) {
+                    showMessage("Product details updated successfully!", "alert-success");
+                    // Disable fields and hide buttons after save
+                    $("#productTitle-" + productId + ", #productDescription-" + productId + ", #productPrice-" + productId + ", #productStatus-" + productId).prop("readonly", true).prop("disabled", true);
+                    $(".btn-save[data-productid='" + productId + "'], .btn-cancel[data-productid='" + productId + "']").hide();
+                    $(".btn-edit[data-productid='" + productId + "']").show();
+                },
+                error: function () {
+                    showMessage("An error occurred while saving product details.", "alert-danger");
+                }
+            });
+        });
+
+        // Delete button handler
+        $(".btn-delete").click(function () {
+            if (confirm("Are you sure you want to delete this product?")) {
+                var productId = $(this).data("productid");
+
+                $.ajax({
+                    url: '/Seller/DeleteProduct',
+                    type: 'POST',
+                    data: { productId: productId },
+                    success: function (response) {
+                        showMessage("Product deactivated successfully!", "alert-success");
+                        // Optionally, hide or update the product in the UI
+                        $("#row-" + productId).remove(); // You can remove the row from the list
+                    },
+                    error: function () {
+                        showMessage("An error occurred while deactivating the product.", "alert-danger");
+                    }
+                });
+            }
+        });
+
+        // Show messages
+        function showMessage(message, alertType) {
+            var messageBox = $("#message");
+            messageBox.text(message).removeClass().addClass('alert ' + alertType).show();
+            setTimeout(function () {
+                messageBox.fadeOut();
+            }, 3000);
+        }
+    });
+</script>
+
+<style>
+    h2{
+        margin-top:95px;
+    }
+    table th, table td {
+        text-align: center;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9f9f9;
+    }
+
+    .table th {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .btn {
+        margin: 5px;
+    }
+
+    .btn-edit, .btn-save, .btn-cancel {
+        width: 80px;
+    }
+
+    .btn-delete {
+        width: 100px;
+    }
+
+    .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        z-index: 1000;
+        display: none;
+    }
+</style>

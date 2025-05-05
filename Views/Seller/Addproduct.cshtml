@@ -1,0 +1,197 @@
+﻿@model Ecommerce.Models.ViewModels.ProductViewModel
+
+@{
+    ViewBag.Title = "Add Product";
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<h2 class="text-center mb-4 text-primary">Add a New Product</h2>
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="@Url.Action("Inventory", "Seller")" class="btn btn-info btn-lg">
+        <i class="fas fa-boxes"></i> Go to Inventory
+    </a>
+    <a href="@Url.Action("Dashboard", "Seller")" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Dashboard
+    </a>
+    <a href="@Url.Action("ManageOrder", "Seller")" class="btn btn-warning btn-lg">
+        <i class="fas fa-shopping-cart"></i> Manage Orders
+    </a>
+</div>
+<div class="container d-flex justify-content-center">
+    <div class="card shadow-lg p-4 rounded-3" style="max-width: 600px; width: 100%;">
+        @using (Html.BeginForm("AddProduct", "Seller", FormMethod.Post, new { enctype = "multipart/form-data", @class = "needs-validation" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <!-- Product Title -->
+            <div class="mb-3">
+                @Html.LabelFor(model => model.ProductTitle, new { @class = "form-label fw-bold" })
+                @Html.TextBoxFor(model => model.ProductTitle, new { @class = "form-control", placeholder = "Enter product title" })
+                @Html.ValidationMessageFor(model => model.ProductTitle, "", new { @class = "text-danger" })
+            </div>
+
+            <!-- Category -->
+            <div class="mb-3">
+                @Html.LabelFor(model => model.Category, new { @class = "form-label fw-bold" })
+                @Html.DropDownListFor(model => model.Category,
+                    new SelectList(new List<string> {
+                        "Electronics", "Clothing & Apparel", "Books", "Home & Furniture",
+                        "Toys & Games", "Beauty & Personal Care", "Health & Wellness",
+                        "Sports & Outdoors", "Food & Beverages", "Automotive & Tools",
+                        "Baby & Kids", "Jewelry & Watches", "Music & Movies",
+                        "Pet Supplies", "Office Supplies", "Arts & Crafts", "Gaming",
+                        "Stationery", "Luxury Goods", "Grocery & Household Items", "Others"
+                    }),
+                    "-- Select Category --",
+                    new { @class = "form-select", id = "categoryDropdown" })
+                @Html.ValidationMessageFor(model => model.Category, "", new { @class = "text-danger" })
+            </div>
+
+            <!-- Other Category (Hidden by default) -->
+            <div class="mb-3" id="otherCategoryDiv" style="display: none;">
+                @Html.Label("Other Category", new { @class = "form-label fw-bold" })
+                @Html.TextBoxFor(model => model.OtherCategory, new { @class = "form-control", placeholder = "Enter category name" })
+                @Html.ValidationMessageFor(model => model.OtherCategory, "", new { @class = "text-danger" })
+
+                <!-- Category Icon Upload -->
+                <div class="mt-3">
+                    <label for="CategoryIcon" class="form-label fw-bold">Upload Category Icon</label>
+                    <input type="file" name="CategoryIcon" id="CategoryIcon" class="form-control">
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div class="mb-3">
+                @Html.LabelFor(model => model.Price, new { @class = "form-label fw-bold" })
+                <div class="input-group">
+                    <span class="input-group-text">INR</span>
+                    @Html.TextBoxFor(model => model.Price, new { @class = "form-control", type = "number", step = "0.01", placeholder = "Enter price" })
+                </div>
+                @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
+            </div>
+
+            <!-- Stock -->
+            <div class="mb-3">
+                @Html.LabelFor(model => model.Stock, new { @class = "form-label fw-bold" })
+                @Html.TextBoxFor(model => model.Stock, new { @class = "form-control", type = "number", placeholder = "Enter stock quantity" })
+                @Html.ValidationMessageFor(model => model.Stock, "", new { @class = "text-danger" })
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                @Html.LabelFor(model => model.Description, new { @class = "form-label fw-bold" })
+                @Html.TextAreaFor(model => model.Description, new { @class = "form-control", rows = "3", placeholder = "Enter product description" })
+                @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+            </div>
+
+            <!-- Product Image Upload -->
+            <div class="mb-3">
+                <label for="ProductImage" class="form-label fw-bold">Product Image</label>
+                <input type="file" name="ProductImage" id="ProductImage" class="form-control">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+                <a href="@Url.Action("Inventory", "Seller")" class="btn btn-secondary px-4">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- FontAwesome Icons -->
+<script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous"></script>
+
+<script>
+    document.getElementById("categoryDropdown").addEventListener("change", function () {
+        var otherCategoryDiv = document.getElementById("otherCategoryDiv");
+        if (this.value === "Others") {
+            otherCategoryDiv.style.display = "block";
+        } else {
+            otherCategoryDiv.style.display = "none";
+        }
+    });
+</script>
+
+<style>
+    h2{
+        margin-top:50px;
+    }
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.3s ease;
+    }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    .btn {
+        border-radius: 8px;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+            transform: translateY(-3px);
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-3px);
+        }
+
+    .form-label {
+        color: #495057;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+    }
+
+    .text-primary {
+        color: #007bff !important;
+    }
+</style>

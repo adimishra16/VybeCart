@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - E-Cart</title> 
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <style>
+        /* Navbar Styles */
+        .navbar {
+            background-color: #333;
+            padding: 10px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+/*            margin:;*/
+            padding: 0 20px;
+        }
+
+        .navbar-logo {
+            color: #fff;
+            font-size: 24px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+            .navbar-logo img {
+                width: 30px; /* Adjust size of the icon */
+                height: 30px; /* Adjust size of the icon */
+                margin-right: 10px; /* Space between icon and text */
+            }
+
+        .navbar-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+            .navbar-links li {
+                display: inline-block;
+            }
+
+            .navbar-links a {
+                color: #fff;
+                text-decoration: none;
+                font-size: 16px;
+                transition: color 0.3s ease; /* Smooth transition for color */
+            }
+
+                /* Hover effect for navbar links */
+                .navbar-links a:hover {
+                    color: #f1c40f; /* Change color on hover */
+                    text-decoration: underline;
+                }
+
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-link {
+            color: #fff;
+            font-size: 16px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease; /* Smooth transition for color */
+        }
+
+            .dropdown-link:hover {
+                color: #f1c40f; /* Change color on hover */
+            }
+
+        .caret {
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            top: 100%;
+            left: 0;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 180px;
+            z-index: 1001;
+        }
+
+            .dropdown-menu li {
+                padding: 10px;
+            }
+
+                .dropdown-menu li a {
+                    color: #fff;
+                    text-decoration: none;
+                    display: block;
+                    transition: background-color 0.3s ease; /* Smooth transition for background color */
+                }
+
+                    /* Hover effect for dropdown menu items */
+                    .dropdown-menu li a:hover {
+                        background-color: #444; /* Change background color on hover */
+                    }
+
+        /* Show dropdown menu on hover */
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    @if (!(ViewContext.RouteData.Values["Controller"].ToString() == "Account" &&
+      (ViewContext.RouteData.Values["Action"].ToString() == "Login" ||
+       ViewContext.RouteData.Values["Action"].ToString() == "Register" ||
+       ViewContext.RouteData.Values["Action"].ToString() == "ForgotPassword")))
+    {
+        @*<nav class="navbar">
+            <div class="navbar-container">
+                <a href="@Url.Action("Index", "Home")" class="navbar-logo">
+                     Add your image path here 
+                    <img src="~/Images/Icons/logo.png" alt="Logo" />
+                    E-Cart
+                </a>
+
+                <ul class="navbar-links">
+                    <li><a href="@Url.Action("Index", "Home")">Home</a></li>
+                    <li><a href="@Url.Action("MyOrders", "Order")">My Orders</a></li>
+                    <li><a href="@Url.Action("Profile", "User")">My Profile</a></li>
+
+                     Categories Dropdown 
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-link">Categories <span class="caret">&#9662;</span></a>
+                        <ul class="dropdown-menu">
+                             Static Categories, replace with dynamic categories if needed 
+                            <li><a href="#">Electronics</a></li>
+                            <li><a href="#">Clothing</a></li>
+                            <li><a href="#">Home & Kitchen</a></li>
+                            <li><a href="#">Books</a></li>
+                            <li><a href="#">Toys</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>*@
+    }
+    <div class="full-width-body-content">
+        @RenderBody()
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

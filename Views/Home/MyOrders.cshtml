@@ -1,0 +1,249 @@
+﻿@{
+    ViewBag.Title = "My Orders";
+    ViewBag.SelectedCategory = "id";
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<h2 class="text-primary">My Orders</h2>
+<!-- Status Filter -->
+<label for="orderStatus" class="fw-bold">Filter by Status:</label>
+<select id="orderStatus" class="form-select w-25 shadow-sm border-primary">
+    <option value="">All</option>
+    <option value="Pending">Pending</option>
+    <option value="Shipped">Shipped</option>
+    <option value="Delivered">Delivered</option>
+    <option value="Canceled">Canceled</option>
+</select>
+
+<!-- Orders Grid -->
+<div class="row mt-4" id="ordersGrid">
+    <div class="col-12 text-center text-muted">Loading orders...</div>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- AJAX Script to Fetch Orders -->
+<script>
+    $(document).ready(function () {
+        function loadOrders(status = "") {
+            $.ajax({
+                url: "/Home/GetMyOrders",
+                type: "GET",
+                data: { status: status },
+                success: function (orders) {
+                    var ordersGrid = $("#ordersGrid");
+                    ordersGrid.empty();
+
+                    if (orders.length === 0) {
+                        ordersGrid.append("<div class='col-12 text-center text-danger'>No orders found.</div>");
+                        return;
+                    }
+
+                    $.each(orders, function (index, order) {
+                        var statusClass = getStatusClass(order.Status);
+                        var productImage = order.ProductImagePath || "/images/default.jpg";
+                        var deliveryText = "";
+
+                        // Improved date handling
+                        var deliveryDate = order.DeliveryDate ? new Date(parseInt(order.DeliveryDate.substr(6))) : null;
+
+                        if (order.Status === "Pending" || order.Status === "Shipped") {
+                            deliveryText = deliveryDate ?
+                                `<p class="text-info"><strong>Expected Delivery:</strong> ${formatDate(deliveryDate)}</p>` :
+                                `<p class="text-info"><strong>Expected Delivery:</strong> To be determined</p>`;
+                        } else if (order.Status === "Delivered") {
+                            deliveryText = deliveryDate ?
+                                `<p class="text-success"><strong>Product Delivered on:</strong> ${formatDate(deliveryDate)}</p>` :
+                                `<p class="text-success"><strong>Product Delivered</strong></p>`;
+                        } else if (order.Status === "Canceled") {
+                            deliveryText = `<p class="text-danger"><strong>Order Canceled</strong></p>`;
+                        }
+
+                        ordersGrid.append(`
+                        <div class="col-md-4 col-sm-6 mb-4">
+                            <div class="card order-card ${statusClass} shadow-sm">
+                                <img src="${productImage}" class="card-img-top product-image" alt="${order.ProductTitle}" onerror="this.onerror=null;this.src='/images/default.jpg';">
+                                <div class="card-body">
+                                    <h5 class="card-title">${order.ProductTitle}</h5>
+                                    <p class="card-text"><strong>Price:</strong> $${order.ProductPrice.toFixed(2)}</p>
+                                    <p class="card-text"><strong>Quantity:</strong> ${order.Quantity}</p>
+                                    <p class="card-text"><strong>Total:</strong> $${order.OrderPrice.toFixed(2)}</p>
+                                    <span class="badge status-badge">${order.Status}</span>
+                                    <p class="status-description">${order.StatusDescription}</p>
+                                    ${deliveryText}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    });
+                },
+                error: function () {
+                    alert("Failed to fetch orders.");
+                }
+            });
+        }
+
+        function formatDate(date) {
+            if (!date || isNaN(date.getTime())) return "N/A";
+            return date.toLocaleDateString("en-US", {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case "Pending": return "pending-order";
+                case "Shipped": return "shipped-order";
+                case "Delivered": return "delivered-order";
+                case "Canceled": return "canceled-order";
+                default: return "";
+            }
+        }
+
+        // Load orders when page loads
+        loadOrders();
+
+        // Filter orders based on status
+        $("#orderStatus").change(function () {
+            loadOrders($(this).val());
+        });
+    });
+</script>
+
+<!-- Custom CSS -->
+<style>
+    /* General Styling */
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Arial', sans-serif;
+        color: #333;
+    }
+
+    h2 {
+        margin-top:90px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 10px;
+        display: inline-block;
+        border-bottom: 3px solid #007bff;
+        color: #004085;
+    }
+
+    /* Grid Layout */
+    .row {
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Card Styling */
+    .order-card {
+        margin-left:20px;
+        margin-right:20px;
+        border-radius: 8px;
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        overflow: hidden;
+        background-color: white;
+        border: 1px solid #ddd;
+    }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .card-text {
+        font-size: 14px;
+        color: #555;
+    }
+
+    /* Product Image */
+    .product-image {
+        width: 100%; /* Make image fit the card width */
+        height: auto; /* Maintain aspect ratio */
+        object-fit: contain; /* Ensure the full image is visible */
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        font-size: 14px;
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 4px;
+    }
+
+    .status-description {
+        font-size: 13px;
+        margin-top: 5px;
+        color: #666;
+    }
+
+    /* Status Colors */
+    .pending-order {
+        border-left: 5px solid #ffc107;
+    }
+
+    .shipped-order {
+        border-left: 5px solid #17a2b8;
+    }
+
+    .delivered-order {
+        border-left: 5px solid #28a745;
+    }
+
+    .canceled-order {
+        border-left: 5px solid #dc3545;
+    }
+
+    /* Badge Colors */
+    .pending-order .status-badge {
+        background-color: #ffc107;
+        color: #856404;
+    }
+
+    .shipped-order .status-badge {
+        background-color: #17a2b8;
+        color: #fff;
+    }
+
+    .delivered-order .status-badge {
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    .canceled-order .status-badge {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    /* Dropdown Styling */
+    select.form-select {
+        transition: all 0.3s ease-in-out;
+        border-width: 2px;
+        background-color: #ffffff;
+        color: #333;
+    }
+
+        select.form-select:focus {
+            box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.4);
+            border-color: #007bff;
+            transform: scale(1.05);
+        }
+    
+</style>

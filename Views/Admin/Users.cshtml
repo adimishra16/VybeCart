@@ -1,0 +1,189 @@
+﻿@model List<Ecommerce.Models.ViewModels.UserViewModel>
+
+@{
+    ViewBag.Title = "Admin - Manage Users";
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<h2 class="text-center">Manage Users</h2>
+
+<div class="text-center mt-3">
+    <a href="@Url.Action("Product", "Admin")" class="btn btn-primary btn-lg">Manage Products</a>
+</div>
+<!-- Search Bar -->
+<div class="mb-3">
+    <input type="text" id="search" class="form-control" placeholder="Search by name, username, or email">
+</div>
+
+<!-- Users Table -->
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="usersTableBody"></tbody>
+</table>
+
+<!-- Pagination Controls -->
+<div id="paginationControls" class="d-flex justify-content-center">
+    <button id="previousPage" class="btn btn-primary" style="display:none;">Previous</button>
+    <div id="pageNumbers" class="mx-2"></div>
+    <button id="nextPage" class="btn btn-primary" style="display:none;">Next</button>
+</div>
+
+<div id="message" class="alert" style="display:none;"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        let currentPage = 1;
+        let totalPages = 1;
+        let searchQuery = "";
+
+        // Load initial users
+        loadUsers(currentPage, searchQuery);
+
+        // Search functionality
+        $("#search").on("input", function () {
+            searchQuery = $(this).val();
+            currentPage = 1;
+            loadUsers(currentPage, searchQuery);
+        });
+
+        // Pagination controls
+        $("#previousPage").click(function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadUsers(currentPage, searchQuery);
+            }
+        });
+
+        $("#nextPage").click(function () {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadUsers(currentPage, searchQuery);
+            }
+        });
+
+        $(document).on("click", ".page-number", function () {
+            let page = $(this).data("page");
+            currentPage = page;
+            loadUsers(currentPage, searchQuery);
+        });
+
+        // Load users with pagination
+        function loadUsers(page, search) {
+            $.ajax({
+                url: '/Admin/GetUsers',
+                type: 'GET',
+                data: { page: page, search: search },
+                success: function (response) {
+                    totalPages = response.totalPages;
+
+                    // Clear table & pagination
+                    $('#usersTableBody').empty();
+                    $('#pageNumbers').empty();
+
+                    // Populate new rows
+                    response.users.forEach(user => {
+                        $('#usersTableBody').append(`
+                            <tr id="row-${user.UserId}">
+                                <td><input type="text" value="${user.FirstName}" id="firstName-${user.UserId}" class="form-control" readonly /></td>
+                                <td><input type="text" value="${user.LastName}" id="lastName-${user.UserId}" class="form-control" readonly /></td>
+                                <td><input type="text" value="${user.Username}" id="username-${user.UserId}" class="form-control" readonly /></td>
+                                <td><input type="email" value="${user.Email}" id="email-${user.UserId}" class="form-control" readonly /></td>
+                                <td><input type="text" value="${user.Phone}" id="phone-${user.UserId}" class="form-control" readonly /></td>
+                                <td>
+                                    <select id="role-${user.UserId}" class="form-control" disabled>
+                                        <option value="Admin" ${user.Role === 'Admin' ? "selected" : ""}>Admin</option>
+                                        <option value="User" ${user.Role === 'User' ? "selected" : ""}>User</option>
+                                        <option value="Seller" ${user.Role === 'Seller' ? "selected" : ""}>Seller</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select id="activityStatus-${user.UserId}" class="form-control" disabled>
+                                        <option value="True" ${user.Activitystatus ? "selected" : ""}>Active</option>
+                                        <option value="False" ${!user.Activitystatus ? "selected" : ""}>Inactive</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit" data-userid="${user.UserId}">Edit</button>
+                                    <button class="btn btn-success btn-save" data-userid="${user.UserId}" style="display:none;">Save</button>
+                                    <button class="btn btn-secondary btn-cancel" data-userid="${user.UserId}" style="display:none;">Cancel</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+
+                    // Toggle pagination visibility
+                    $("#previousPage").toggle(currentPage > 1);
+                    $("#nextPage").toggle(currentPage < totalPages);
+
+                    // Add numbered page buttons
+                    for (let i = 1; i <= totalPages; i++) {
+                        let btnClass = i === currentPage ? "btn-primary" : "btn-outline-primary";
+                        $('#pageNumbers').append(`
+                            <button class="btn ${btnClass} page-number" data-page="${i}">${i}</button>
+                        `);
+                    }
+                },
+                error: function () {
+                    showMessage("An error occurred while loading user data.", "alert-danger");
+                }
+            });
+        }
+
+        // Function to display messages
+        function showMessage(message, alertType) {
+            var messageBox = $("#message");
+            messageBox.text(message).removeClass().addClass('alert ' + alertType).show();
+            setTimeout(function () {
+                messageBox.fadeOut();
+            }, 3000);
+        }
+    });
+</script>
+
+<style>
+    h2{
+    margin-top:90px;
+}
+    table th, table td {
+        text-align: center;
+    }
+
+    .table th {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .btn {
+        margin: 5px;
+    }
+
+    .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        z-index: 1000;
+        display: none;
+    }
+
+    #paginationControls {
+        margin-top: 20px;
+    }
+
+    .page-number {
+        margin: 0 5px;
+    }
+</style>

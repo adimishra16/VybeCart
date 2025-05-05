@@ -1,0 +1,255 @@
+﻿@model Ecommerce.Models.ViewModels.ProductViewModel
+
+@{
+    ViewBag.Title = Model.ProductTitle;
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<!-- Full-Screen Product Details Section -->
+<div class="product-page">
+    <!-- Product Section -->
+    <div class="product-container">
+        <div class="product-image">
+
+            <img src="@Model.ProductImagePath" alt="@Model.ProductTitle">
+        </div>
+        <div class="product-info">
+            <h2>@Model.ProductTitle</h2>
+            <p><strong>Category:</strong> @Model.Category</p>
+            <p><strong>Price:</strong> ₹@Model.Price</p>
+            <p><strong>Description:</strong> @Model.Description</p>
+        </div>
+    </div>
+
+    <!-- Average Rating Section -->
+    <div class="rating-section">
+        <h3>Average Rating</h3>
+        <div>
+            <p><strong>Rating:</strong> @Model.AverageRating.ToString("0.0") / 5</p>
+            <div class="stars">
+                @{
+                    int fullStars = (int)Model.AverageRating;
+                    bool hasHalfStar = ((double)Model.AverageRating - fullStars) >= 0.5;
+                }
+
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= fullStars)
+                    {
+                        <span class="star filled">★</span>
+                    }
+                    else if (hasHalfStar && i == fullStars + 1)
+                    {
+                        <span class="star half-filled">★</span>
+                    }
+                    else
+                    {
+                        <span class="star empty">☆</span>
+                    }
+                }
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h3>Customer Reviews</h3>
+            @if (Model.Reviews.Any())
+            {
+                foreach (var review in Model.Reviews)
+                {
+                    <div class="review-box">
+                        <p>
+                            <strong>@review.Username</strong> rated
+                            <span class="review-stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Convert.ToInt32(review.Rating))  // ✅ FIX: Convert to int
+                                    {
+                                        <span class="star filled">★</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="star empty">☆</span>
+                                    }
+                                }
+                            </span>
+                        </p>
+                        <p>@review.ReviewText</p>
+                        <small>Reviewed on: @review.CreatedAt.ToString("yyyy-MM-dd")</small>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>No reviews yet. Be the first to review!</p>
+            }
+        </div>
+
+        <hr>
+
+        <!-- Add Review Form Section -->
+        <div class="review-form-section">
+            <h3>Leave a Review</h3>
+            <form method="post" action="@Url.Action("AddReview", "Product")" class="review-form">
+                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <input type="hidden" name="rating" id="selectedRating" value="0" />
+
+                <label>Rating:</label>
+                <div class="stars" id="ratingStars">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+
+                <label for="reviewText">Review:</label>
+                <textarea name="reviewText" id="reviewText" rows="4"></textarea>
+
+                <button type="submit">Submit Review</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Interactive Star Rating -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const stars = document.querySelectorAll("#ratingStars .star");
+        const ratingInput = document.getElementById("selectedRating");
+
+        stars.forEach(star => {
+            star.addEventListener("click", function () {
+                let value = this.getAttribute("data-value");
+                ratingInput.value = value;
+                updateStars(value);
+            });
+
+            star.addEventListener("mouseover", function () {
+                let value = this.getAttribute("data-value");
+                updateStars(value);
+            });
+
+            star.addEventListener("mouseout", function () {
+                updateStars(ratingInput.value);
+            });
+        });
+
+        function updateStars(value) {
+            stars.forEach(star => {
+                if (star.getAttribute("data-value") <= value) {
+                    star.classList.add("selected");
+                } else {
+                    star.classList.remove("selected");
+                }
+            });
+        }
+    });
+</script>
+
+<!-- CSS Styling -->
+<style>
+    body {
+        background-color: #f4f7fc;
+        font-family: Arial, sans-serif;
+    }
+
+    .product-page {
+        margin-top:100px;
+        max-width: 100%;
+        min-height: 100vh;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 50px;
+    }
+
+    .product-container {
+        display: flex;
+        align-items: flex-start;
+        gap: 40px;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image img {
+        width: 100%;
+        max-width: 350px;
+        height: 350px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .product-info h2 {
+        margin-top: 0;
+        color: #333;
+        font-size: 28px;
+    }
+
+    .stars {
+        display: flex;
+        gap: 5px;
+        font-size: 1.8em;
+        color: #ccc;
+        cursor: pointer;
+    }
+
+    .star {
+        transition: transform 0.2s ease;
+    }
+
+        .star:hover,
+        .star.selected {
+            color: #FFD700;
+            transform: scale(1.2);
+        }
+
+    .rating-section, .reviews-section, .review-form-section {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .review-box {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .review-stars {
+        font-size: 1.2em;
+        color: #FFD700;
+    }
+
+    .filled {
+        color: #FFD700;
+    }
+
+    .empty {
+        color: #ddd;
+    }
+
+    .review-form button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        cursor: pointer;
+        font-size: 18px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+        .review-form button:hover {
+            background-color: #218838;
+        }
+</style>

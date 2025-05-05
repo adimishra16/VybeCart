@@ -1,0 +1,299 @@
+﻿@model Ecommerce.Models.ViewModels.RegisterViewModel
+@{
+    ViewBag.Title = "Register";
+}
+
+<div class="register-container">
+    <h2 class="heading">Create Your Account</h2>
+
+    @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm" }))
+    {
+        <div class="form-container">
+            <div class="form-group">
+                @Html.LabelFor(m => m.FirstName, "First Name:")
+                @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control", placeholder = "Enter your first name" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.LastName, "Last Name:")
+                @Html.TextBoxFor(m => m.LastName, new { @class = "form-control", placeholder = "Enter your last name" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Username, "Username:")
+                @Html.TextBoxFor(m => m.Username, new { @class = "form-control", placeholder = "Create a username", id = "Username" })
+                @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger" })
+
+                <ul id="usernameValidation" class="validation-list">
+                    <li id="usernameLengthRule" class="invalid">❌ At least 3 characters (excluding spaces)</li>
+                    <li id="usernameSpaceRule" class="valid">✅ No spaces allowed</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Email, "Email:")
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Enter your email", type = "email" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Phone, "Phone Number:")
+                @Html.TextBoxFor(m => m.Phone, new { @class = "form-control", placeholder = "Enter your phone number", type = "tel" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Password, "Password:")
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Create a password", id = "Password" })
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+
+                <ul id="passwordValidation" class="validation-list">
+                    <li id="uppercaseRule" class="invalid">❌ One uppercase letter</li>
+                    <li id="lowercaseRule" class="invalid">❌ One lowercase letter</li>
+                    <li id="numberRule" class="invalid">❌ One number</li>
+                    <li id="specialCharRule" class="invalid">❌ One special character</li>
+                    <li id="lengthRule" class="invalid">❌ At least 8 characters</li>
+                </ul>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="form-group">
+                @Html.Label("Confirm Password:")
+                @Html.Password("ConfirmPassword", "", new { @class = "form-control", placeholder = "Re-enter your password", id = "ConfirmPassword" })
+                <span id="confirmPasswordError" class="text-danger"></span>
+            </div>
+
+            <!-- Security Question (Birthplace) -->
+            <div class="form-group">
+                @Html.Label("Birthplace (Security Question):")
+                @Html.TextBoxFor(m => m.SecurityAnswer, new { @class = "form-control", id = "SecurityAnswer" })
+                <span id="birthplaceError" class="text-danger"></span>
+            </div>
+
+            <!-- Role Selection -->
+            <div class="form-group">
+                @Html.Label("Select Role:")
+                @Html.DropDownList("Role", new List<SelectListItem>
+                {
+                    new SelectListItem { Text = "User", Value = "User" },
+                    new SelectListItem { Text = "Seller", Value = "Seller" }
+                }, "Select a Role", new { @class = "form-control", id = "Role" })
+                <span id="roleError" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" id="deliveryDaysGroup" style="display: none;">
+                @Html.Label("Expected Delivery Days:")
+                @Html.TextBoxFor(m => m.DeliveryDays, new { @class = "form-control", type = "number", min = "1", id = "DeliveryDays" })
+                <span id="deliveryDaysError" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-register" disabled>Register</button>
+            </div>
+        </div>
+        <div class="text-center">
+            <p>Already have an account? <a href="@Url.Action("Login", "Account")">Login here</a></p>
+        </div>
+
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const passwordPattern = /^(?=.*[A-Z])(?=.*[\W_])(?=.*\d).{8,}$/;
+            const usernamePattern = /^(?!\s*$)[^\s]{3,}$/; // At least 3 non-space characters
+
+            $("#Password").on("keyup", function () {
+                var password = $(this).val();
+                updateValidation("#uppercaseRule", /[A-Z]/.test(password));
+                updateValidation("#lowercaseRule", /[a-z]/.test(password));
+                updateValidation("#numberRule", /\d/.test(password));
+                updateValidation("#specialCharRule", /[\W_]/.test(password));
+                updateValidation("#lengthRule", password.length >= 8);
+                validateConfirmPassword();
+                toggleSubmitButton();
+            });
+
+            $("#ConfirmPassword").on("keyup", function () {
+                validateConfirmPassword();
+                toggleSubmitButton();
+            });
+
+            $("#Username").on("keyup", function () {
+                var username = $(this).val();
+                var isValidUsername = usernamePattern.test(username);
+
+                updateValidation("#usernameLengthRule", username.length >= 3 && !/^\s*$/.test(username));
+                updateValidation("#usernameSpaceRule", !/\s/.test(username)); // No spaces at all
+
+                toggleSubmitButton();
+            });
+
+            $("#SecurityAnswer").on("keyup", function () {
+                validateBirthplace();
+                toggleSubmitButton();
+            });
+
+            $("#Role").on("change", function () {
+                validateRole();
+                toggleSubmitButton();
+                toggleDeliveryDays(); // ✅ Added function to handle showing/hiding Delivery Days
+            });
+
+            function validateConfirmPassword() {
+                var password = $("#Password").val();
+                var confirmPassword = $("#ConfirmPassword").val();
+                if (password === confirmPassword && confirmPassword !== "") {
+                    $("#confirmPasswordError").text("");
+                    return true;
+                } else {
+                    $("#confirmPasswordError").text("Passwords do not match!");
+                    return false;
+                }
+            }
+
+            function validateBirthplace() {
+                var birthplace = $("#SecurityAnswer").val().trim();
+                if (birthplace.length > 0) {
+                    $("#birthplaceError").text("");
+                    return true;
+                } else {
+                    $("#birthplaceError").text("This field is required.");
+                    return false;
+                }
+            }
+
+            function validateRole() {
+                var role = $("#Role").val();
+                if (role !== "") {
+                    $("#roleError").text("");
+                    return true;
+                } else {
+                    $("#roleError").text("Please select a role.");
+                    return false;
+                }
+            }
+
+            function toggleDeliveryDays() {
+                var role = $("#Role").val();
+                if (role === "Seller") {
+                    $("#deliveryDaysGroup").slideDown(); // ✅ Show when Seller is selected
+                } else {
+                    $("#deliveryDaysGroup").slideUp(); // ✅ Hide otherwise
+                    $("#DeliveryDays").val(""); // Clear input when hidden
+                }
+            }
+
+            function updateValidation(rule, isValid) {
+                $(rule).toggleClass("valid", isValid).toggleClass("invalid", !isValid);
+                $(rule).html(isValid ? "✅ " + $(rule).text().slice(2) : "❌ " + $(rule).text().slice(2));
+            }
+
+            function toggleSubmitButton() {
+                const usernameValid = usernamePattern.test($("#Username").val());
+                const passwordValid = passwordPattern.test($("#Password").val());
+                const confirmPasswordValid = validateConfirmPassword();
+                const birthplaceValid = validateBirthplace();
+                const roleValid = validateRole();
+
+                if (usernameValid && passwordValid && confirmPasswordValid && birthplaceValid && roleValid) {
+                    $("button[type='submit']").prop("disabled", false);
+                } else {
+                    $("button[type='submit']").prop("disabled", true);
+                }
+            }
+        });
+    </script>
+}
+<style>
+    /* General Page Styling */
+    body {
+        background-color: #f0f4f8;
+        font-family: 'Arial', sans-serif;
+    }
+
+    /* Centered Registration Container */
+    .register-container {
+        width: 40%;
+        margin: 50px auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading */
+    .heading {
+        text-align: center;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    /* Form Styles */
+    .form-container {
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+        /* Focus Effect */
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    /* Button Styling */
+    .btn-register {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        color: white;
+        border: none;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .btn-register:hover {
+            background: linear-gradient(90deg, #0056b3, #0041a3);
+            transform: scale(1.02);
+        }
+
+        .btn-register:disabled {
+            background: #b0c4de;
+            cursor: not-allowed;
+        }
+
+    /* Validation List */
+    .validation-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 5px;
+        font-size: 0.9rem;
+    }
+
+        .validation-list li {
+            padding: 5px 0;
+        }
+
+    .valid {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .invalid {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>

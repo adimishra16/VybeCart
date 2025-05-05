@@ -1,0 +1,93 @@
+﻿@model List<Ecommerce.Models.ViewModels.WishlistItemViewModel>
+
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<h2 class="text-center">Your Wishlist</h2>
+
+@if (Model.Count == 0)
+{
+    <p class="text-center">Your wishlist is empty.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="@item.ProductImagePath" class="card-img-top" alt="Product Image" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.ProductTitle</h5>
+                        <p class="card-text"><strong>Price:</strong> $@item.Price</p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <!-- Move to Cart Button -->
+                        <button class="btn btn-primary move-to-cart" data-product-id="@item.ProductId">
+                            Move to Cart
+                        </button>
+                        <!-- Remove from Wishlist Button -->
+                        <button class="btn btn-danger remove-from-wishlist" data-product-id="@item.ProductId">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Remove from Wishlist
+        $(".remove-from-wishlist").click(function () {
+            var productId = $(this).data("product-id");
+
+            $.ajax({
+                url: '@Url.Action("RemoveFromWishlist", "Home")',
+                type: 'POST',
+                data: { productId: productId },
+                success: function (response) {
+                    if (response.success) {
+                        alert("Item removed from wishlist!");
+                        location.reload(); // Reload page to update the list
+                    } else {
+                        alert("Failed to remove item.");
+                    }
+                },
+                error: function () {
+                    alert("An error occurred.");
+                }
+            });
+        });
+
+        // Move to Cart
+        $(".move-to-cart").click(function () {
+            var productId = $(this).data("product-id");
+
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Home")',
+                type: 'POST',
+                data: { productId: productId },
+                success: function (response) {
+                    if (response.success) {
+                        alert("Item moved to cart!");
+                        location.reload(); // Reload page to update the list
+                    } else {
+                        alert("Failed to move item to cart.");
+                    }
+                },
+                error: function () {
+                    alert("An error occurred.");
+                }
+            });
+        });
+    });
+</script>
+<style>
+    h2 {
+        margin-top: 100px;
+    }
+</style>

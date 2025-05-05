@@ -1,0 +1,225 @@
+﻿@model Ecommerce.Models.ViewModels.LoginViewModel
+
+@{
+    ViewBag.Title = "Login";
+    Layout = null; // This ensures the login page does not include the default layout with the navbar
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login - Ecommerce</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #080710;
+        }
+
+        .background {
+            width: 430px;
+            height: 520px;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 50%;
+        }
+
+            .background .shape {
+                height: 200px;
+                width: 200px;
+                position: absolute;
+                border-radius: 50%;
+            }
+
+        .shape:first-child {
+            background: linear-gradient(#1845ad, #23a2f6);
+            left: -80px;
+            top: -80px;
+        }
+
+        .shape:last-child {
+            background: linear-gradient(to right, #ff512f, #f09819);
+            right: -30px;
+            bottom: -80px;
+        }
+
+        .login-container {
+            height: 520px;
+            width: 400px;
+            background-color: rgba(255, 255, 255, 0.13);
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+            padding: 50px 35px;
+        }
+
+            .login-container h3 {
+                font-size: 32px;
+                font-weight: 500;
+                line-height: 42px;
+                text-align: center;
+                color: white;
+            }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+        }
+
+        input, select {
+            display: block;
+            height: 45px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.07);
+            border-radius: 5px;
+            padding: 0 10px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: white;
+            border: none;
+            outline: none;
+        }
+
+        select {
+            display: block;
+            height: 45px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.07);
+            border-radius: 5px;
+            padding: 0 10px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: white;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+
+            select:focus {
+                border-color: #ffffff;
+            }
+
+            select option {
+                background-color: #080710;
+                color: white;
+            }
+
+                select option:hover {
+                    background-color: #1845ad;
+                    color: #fff;
+                }
+
+        ::placeholder {
+            color: #e5e5e5;
+        }
+
+        button {
+            margin-top: 30px;
+            width: 100%;
+            background-color: #ffffff;
+            color: #080710;
+            padding: 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+            button:hover {
+                background-color: #ddd;
+            }
+
+        .link-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+            .link-container a {
+                color: #ffffff;
+                text-decoration: none;
+                font-size: 14px;
+            }
+
+                .link-container a:hover {
+                    text-decoration: underline;
+                }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="login-container">
+        <h3>Login Here</h3>
+
+        <!-- Display error messages from the validation summary -->
+        @Html.ValidationSummary(true, "", new { @class = "error-message" })
+
+        <!-- Display error message if any from ViewData -->
+        @if (!String.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
+        {
+            <div class="error-message">
+                @ViewData["ErrorMessage"]
+            </div>
+        }
+
+        @using (Html.BeginForm("Login", "Account", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <!-- Username Field -->
+            <label for="email">Username</label>
+            @Html.TextBoxFor(m => m.Username, new { @class = "form-control", placeholder = "Enter your Username" })
+            @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger" })
+
+            <!-- Password Field -->
+            <label for="password">Password</label>
+            @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Enter your password" })
+            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+
+            <button type="submit">Log In</button>
+        }
+
+        <div class="link-container">
+            <a href="@Url.Action("ForgotPassword", "Account")">Forgot Password?</a> |
+            <a href="@Url.Action("Register", "Account")">Sign Up</a>
+        </div>
+    </div>
+
+    <!-- Handle validation errors from ModelState -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        @*<script>
+            alert("Please check the form for errors.");
+        </script>*@
+    }
+</body>
+</html>

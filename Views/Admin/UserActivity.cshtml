@@ -1,0 +1,36 @@
+﻿@model List<Ecommerce.Models.ViewModels.UserLoginActivity>
+
+@{
+    ViewBag.Title = "UserActivity";
+}
+
+<h2>User Activity</h2>
+
+@if (Model != null && Model.Count > 0)
+{
+    <table border="1">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Login Time</th>
+                <th>Activity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.UserName</td>
+                    <td>@user.LoginTime</td>
+                    <td>@user.ActivityDescription</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No users logged in today.</p>
+}

@@ -1,0 +1,191 @@
+﻿@{
+    ViewBag.Title = "Manage Orders";
+}
+
+<h2 class="text-center">Manage Orders</h2>
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="@Url.Action("Inventory", "Seller")" class="btn btn-info btn-lg">
+        <i class="fas fa-boxes"></i> Go to Inventory
+    </a>
+    <a href="@Url.Action("AddProduct", "Seller")" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Add Product
+    </a>
+    <a href="@Url.Action("Dashboard", "Seller")" class="btn btn-warning btn-lg">
+        <i class="fas fa-shopping-cart"></i> Return to Dashboard
+    </a>
+</div>
+<!-- Filter Dropdown for Order Status -->
+<div class="text-center mt-3">
+    <label for="orderStatusFilter" class="font-weight-bold">Filter by Status:</label>
+    <select id="orderStatusFilter" class="form-control d-inline-block w-auto ml-2">
+        <option value="all">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Canceled">Canceled</option>
+    </select>
+</div>
+
+<table class="table table-bordered mt-4">
+    <thead class="thead-dark">
+        <tr>
+            <th>Customer Name</th>
+            <th>Product Name</th>
+            <th>Order Date</th>
+            <th>Quantity</th>
+            <th>Order Price (₹)</th>
+            <th>Status</th>
+            <th>Status Description</th>
+            <th>Shipping Address</th>
+            <th>Payment Method</th>
+            <th>Delivery Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="orderTableBody">
+        <!-- Orders will be loaded here via AJAX -->
+    </tbody>
+</table>
+
+<div id="message" class="alert" style="display:none;"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    loadOrders();
+
+    // Format date for display
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-IN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    // Load Orders via AJAX
+    function loadOrders() {
+        $.ajax({
+            url: '@Url.Action("GetSellerOrders", "Seller")',
+            type: 'GET',
+            dataType: 'json',
+            success: function (orders) {
+                let tableBody = $("#orderTableBody");
+                tableBody.empty();
+                $.each(orders, function (index, order) {
+                    tableBody.append(`
+                        <tr id="row-${order.OrderId}" data-status="${order.OrderStatus.toLowerCase()}">
+                            <td>${order.CustomerName}</td>
+                            <td>${order.ProductName}</td>
+                            <td>${formatDate(order.OrderDate)}</td>
+                            <td>${order.Quantity}</td>
+                            <td>${order.Price.toFixed(2)}</td>
+                            <td>
+                                <select class="form-control status-dropdown" data-order-id="${order.OrderId}" disabled>
+                                    <option value="Pending" ${order.OrderStatus === "Pending" ? "selected" : ""}>Pending</option>
+                                    <option value="Shipped" ${order.OrderStatus === "Shipped" ? "selected" : ""}>Shipped</option>
+                                    <option value="Delivered" ${order.OrderStatus === "Delivered" ? "selected" : ""}>Delivered</option>
+                                    <option value="Canceled" ${order.OrderStatus === "Canceled" ? "selected" : ""}>Canceled</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control status-description"
+                                       data-order-id="${order.OrderId}"
+                                       value="${order.StatusDescription}"
+                                       disabled>
+                            </td>
+                            <td>${order.ShippingAddress}</td>
+                            <td>${order.PaymentMethod}</td>
+                            <td>${order.DeliveryDate}</td>
+                            <td>
+                                <button class="btn btn-warning edit-status-btn" data-order-id="${order.OrderId}">Edit</button>
+                                <button class="btn btn-primary update-status-btn" data-order-id="${order.OrderId}" style="display: none;">Update</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+    }
+
+    // Enable Editing When 'Edit' Button is Clicked
+    $(document).on("click", ".edit-status-btn", function () {
+        let orderId = $(this).data("order-id");
+
+        // Enable all editable fields
+        $(`.status-dropdown[data-order-id="${orderId}"]`).prop("disabled", false);
+        $(`.status-description[data-order-id="${orderId}"]`).prop("disabled", false);
+
+        // Show 'Update' button and hide 'Edit' button
+        $(this).hide();
+        $(`.update-status-btn[data-order-id="${orderId}"]`).show();
+    });
+
+   $(document).on("click", ".update-status-btn", function () {
+    let orderId = $(this).data("order-id");
+    let status = $(`.status-dropdown[data-order-id="${orderId}"]`).val();
+    let statusDescription = $(`.status-description[data-order-id="${orderId}"]`).val();
+
+    $.ajax({
+        url: '@Url.Action("UpdateOrderStatus", "Seller")',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            orderId: orderId,
+            status: status,
+            description: statusDescription
+        }),
+        success: function (response) {
+            if (response.success) {
+                showMessage("Order status updated successfully!", "alert-success");
+
+                // Disable the dropdown and input field after saving
+                $(`.status-dropdown[data-order-id="${orderId}"]`).prop("disabled", true);
+                $(`.status-description[data-order-id="${orderId}"]`).prop("disabled", true);
+
+                // Show Edit button and hide Update button
+                $(`.edit-status-btn[data-order-id="${orderId}"]`).show();
+                $(`.update-status-btn[data-order-id="${orderId}"]`).hide();
+            } else {
+                showMessage("Failed to update order.", "alert-danger");
+            }
+        },
+        error: function () {
+            showMessage("Error updating order. Please try again.", "alert-danger");
+        }
+    });
+});
+
+
+    // Filter Orders Based on Status
+    $("#orderStatusFilter").change(function () {
+        var selectedStatus = $(this).val().toLowerCase();
+
+        $("#orderTableBody tr").each(function () {
+            var rowStatus = $(this).attr("data-status").toLowerCase();
+
+            if (selectedStatus === "all" || rowStatus === selectedStatus) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    // Show Success/Error Messages
+    function showMessage(message, alertType) {
+        var messageBox = $("#message");
+        messageBox.text(message)
+                 .removeClass()
+                 .addClass('alert ' + alertType)
+                 .show();
+        setTimeout(function () {
+            messageBox.fadeOut();
+        }, 3000);
+    }
+});
+</script>

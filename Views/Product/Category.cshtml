@@ -1,0 +1,169 @@
+﻿@model List<Ecommerce.Models.ViewModels.ProductViewModel>
+
+@{
+    ViewBag.Title = "Category - " + ViewBag.SelectedCategory;
+}
+
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+
+<div class="container mt-4">
+    <h2 class="text-center">Products in @ViewBag.SelectedCategory</h2>
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var product in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm rounded-lg border-0 position-relative">
+                        <a href="@Url.Action("ProductDetails", "Product", new { productId = product.ProductId })">
+                            <img src="@Url.Content(product.ProductImagePath)" class="card-img-top" alt="@product.ProductTitle" style="height: 250px; object-fit: cover;">
+                        </a>
+                            <!-- Best Selling Tag -->
+                            @if (product.IsBestSelling)
+                            {
+                                <span class="badge badge-danger position-absolute top-0 start-0 m-2 p-2 font-weight-bold">Best Selling</span>
+                            }
+
+                            <div class="card-body text-center">
+                                <h5 class="card-title font-weight-bold text-dark">@product.ProductTitle</h5>
+                                <p class="card-text text-muted"><strong>Category:</strong> @product.Category</p>
+                                <p class="card-text text-dark"><strong>Price:</strong> @product.Price INR</p>
+
+                                <!-- Buttons Row -->
+                                <div class="btn-group d-flex flex-column">
+                                    <!-- Add to Cart Button -->
+                                    <button type="button" class="btn btn-primary mb-2" id="addToCartBtn_@product.ProductId" data-product-id="@product.ProductId">
+                                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                                    </button>
+
+                                    <!-- Add to Wishlist Button -->
+                                    <button type="button" class="btn btn-danger mb-2" id="addToWishlistBtn_@product.ProductId" data-product-id="@product.ProductId">
+                                        <img id="wishlistIconImage_@product.ProductId" src="~/Images/Icons/heart_unfilled.png" style="width: 20px; height: 20px; margin-right: 10px;">
+                                        <span id="wishlistBtnText_@product.ProductId">Add to Wishlist</span>
+                                    </button>
+
+                                    <!-- View Details Button -->
+                                    @*<a href="@Url.Action("ProductDetails", "Product", new { productId = product.ProductId })" class="btn btn-info">*@
+                                        @*<i class="fas fa-eye"></i> View Details*@
+                                    
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-md-12">
+                <p class="text-center text-muted">No products available in this category.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .btn-danger {
+        background-color: #f8f9fa; /* Lighter background */
+        border-color: #f8f9fa; /* Matching border color */
+        color: #dc3545; /* Ensure the icon and text have a distinct color */
+    }
+    .card {
+        margin-top:45px;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.3s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .btn-danger img {
+        vertical-align: middle;
+        margin-right: 5px;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+        font-size: 14px;
+        border-radius: 5px;
+    }
+</style>
+
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $(".container").on("click", ".btn-primary", function () {
+            var productId = $(this).data("product-id");
+            var button = $('#addToCartBtn_' + productId);
+            var originalText = button.html();
+
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Home")',
+                type: 'POST',
+                data: { productId: productId },
+                success: function (response) {
+                    if (response.success) {
+                        button.html('<i class="fas fa-check-circle"></i> Added');
+                        button.prop('disabled', true);
+                        setTimeout(function () {
+                            button.html(originalText);
+                            button.prop('disabled', false);
+                        }, 2000);
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('Error adding product to cart.');
+                }
+            });
+        });
+
+        $(".container").on("click", ".btn-danger", function () {
+            var productId = $(this).data("product-id");
+            var button = $('#addToWishlistBtn_' + productId);
+            var icon = $('#wishlistIconImage_' + productId);
+            var buttonText = $('#wishlistBtnText_' + productId);
+
+            var isAdded = (buttonText.text() === "Added");
+
+            $.ajax({
+                url: '@Url.Action("ToggleWishlist", "Home")',
+                type: 'POST',
+                data: { productId: productId, isAdded: isAdded },
+                success: function (response) {
+                    if (response.success) {
+                        if (isAdded) {
+                            buttonText.text('Add to Wishlist');
+                            icon.attr('src', '~/Images/Icons/heart_unfilled.png');
+                        } else {
+                            buttonText.text('Added');
+                            icon.attr('src', '~/Images/Icons/heart_filled.png');
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('Error adding/removing product from wishlist.');
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,223 @@
+﻿@model List<Ecommerce.Models.ViewModels.ProductViewModel>
+
+@{
+    ViewBag.Title = "Seller - Manage Inventory";
+}
+<nav>
+    @RenderPage("~/Views/Shared/_Header.cshtml")
+</nav>
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="@Url.Action("Dasboard", "Seller")" class="btn btn-info btn-lg">
+        <i class="fas fa-boxes"></i> Return to Dashboard
+    </a>
+    <a href="@Url.Action("AddProduct", "Seller")" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Add Product
+    </a>
+    <a href="@Url.Action("ManageOrder", "Seller")" class="btn btn-warning btn-lg">
+        <i class="fas fa-shopping-cart"></i> Manage Orders
+    </a>
+</div>
+<h2 class="text-center mb-5">Manage Inventory</h2>
+
+<div class="row">
+    @foreach (var product in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <img src="@product.ProductImagePath" class="card-img-top" alt="@product.ProductTitle">
+                <div class="card-body">
+                    <h5 class="card-title">@product.ProductTitle</h5>
+                    <p class="card-text">
+                        <strong>Category:</strong> @product.Category <br>
+                        <strong>Price:</strong> $@product.Price <br>
+                        <strong>Stock:</strong> <span id="stock-@product.ProductId">@product.Stock</span>
+                    </p>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-primary btn-sm btn-add-stock" data-productid="@product.ProductId">Add Stock</button>
+                        <button class="btn btn-danger btn-sm btn-remove-stock" data-productid="@product.ProductId">Remove Stock</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+     <div class="text-center mt-3">
+     <a href="@Url.Action("Dashboard", "Seller")" class="btn btn-secondary">
+         <i class="fas fa-home"></i> Return to Dashboard
+     </a>
+ </div>
+ <div class="text-center mt-3">
+     <a href="@Url.Action("AddProduct", "Seller")" class="btn btn-secondary">
+         <i class="fas fa-home"></i> Add Product
+     </a>
+</div>
+
+<!-- Add Stock Modal -->
+<div id="addStockModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Stock</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalProductId">
+                <label>Enter Additional Stock:</label>
+                <input type="number" id="additionalStock" class="form-control" min="1">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="saveStock">Save</button>
+                <button type="button" class="btn btn-secondary btn-close-modal" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Remove Stock Modal -->
+<div id="removeStockModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Stock</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="removeModalProductId">
+                <label>Enter Stock to Remove:</label>
+                <input type="number" id="removeStock" class="form-control" min="1">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="confirmRemoveStock">Remove</button>
+                <button type="button" class="btn btn-secondary btn-close-modal" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Open Add Stock Modal
+        $(".btn-add-stock").click(function () {
+            $("#modalProductId").val($(this).data("productid"));
+            $("#addStockModal").modal("show");
+        });
+
+        // Open Remove Stock Modal
+        $(".btn-remove-stock").click(function () {
+            $("#removeModalProductId").val($(this).data("productid"));
+            $("#removeStockModal").modal("show");
+        });
+
+        // Save Stock Addition
+        $("#saveStock").click(function () {
+            var productId = $("#modalProductId").val();
+            var additionalStock = $("#additionalStock").val();
+
+            $.post("/Seller/AddStock", { productId: productId, additionalStock: additionalStock }, function (response) {
+                if (response.success) {
+                    alert(response.message);
+                    $("#stock-" + productId).text(parseInt($("#stock-" + productId).text()) + parseInt(additionalStock));
+                    $("#addStockModal").modal("hide");
+                }
+            });
+        });
+
+        // Confirm Stock Removal
+        $("#confirmRemoveStock").click(function () {
+            var productId = $("#removeModalProductId").val();
+            var removeStock = $("#removeStock").val();
+
+            $.post("/Seller/RemoveStock", { productId: productId, removeStock: removeStock }, function (response) {
+                if (response.success) {
+                    alert(response.message);
+                    $("#stock-" + productId).text(parseInt($("#stock-" + productId).text()) - parseInt(removeStock));
+                    $("#removeStockModal").modal("hide");
+                }
+            });
+        });
+
+        // Ensure Cancel and Close (×) properly close the modal
+        $(".btn-close-modal, .close").click(function () {
+            $("#addStockModal, #removeStockModal").modal("hide");
+        });
+    });
+</script>
+
+
+<style>
+    h2{
+        margin-top:90px;
+    }
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        margin: 10px;
+        padding: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        background-color: #fff;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+    }
+
+    .card img {
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .card-body {
+        padding: 10px;
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .card-text {
+        font-size: 14px;
+        color: #555;
+    }
+
+    .btn-add-stock, .btn-remove-stock {
+        width: 48%;
+        padding: 8px;
+    }
+
+    .btn-add-stock {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-remove-stock {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .modal-content {
+        border-radius: 8px;
+    }
+
+    .modal-header {
+        background-color: #f7f7f7;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #ddd;
+    }
+
+    .modal-body input {
+        margin-top: 10px;
+    }
+</style>
